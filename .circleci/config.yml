@@ -62,7 +62,7 @@ workflows:
     jobs:
       - rspec
       - rubocop
-      - deploy
+      - deploy:
           requires:
             - rspec
             - rubocop
