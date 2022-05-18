@@ -1,0 +1,22 @@
+development:
+  clients:
+    default:
+      database: virtuatable
+      hosts:
+        - localhost:27017
+  options:
+    raise_not_found_error: false
+production:
+  clients:
+    default:
+      uri: <%= ENV['MONGODB_DATABASE_URI'] %>
+  options:
+    raise_not_found_error: false
+test:
+  clients:
+    default:
+      database: virtuatable-tests
+      hosts:
+        - localhost:27017
+  options:
+    raise_not_found_error: false
