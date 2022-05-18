@@ -4,8 +4,8 @@ source 'https://rubygems.org/'
 
 group :development, :production, :test do
   gem 'dotenv'
-  gem 'virtuatable-core', path: '../../core', require: 'core'
   gem 'require_all'
+  gem 'virtuatable-core', path: '../../core', require: 'core'
 end
 
 group :development, :production do

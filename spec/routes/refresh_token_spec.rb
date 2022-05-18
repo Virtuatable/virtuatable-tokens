@@ -186,7 +186,7 @@ RSpec.describe 'POST /tokens/refresh' do
         )
       end
     end
-  
+
     describe 'when the token has already been used' do
       let!(:other_token) { create(:token, generator: token, authorization: authorization) }
 
@@ -197,11 +197,11 @@ RSpec.describe 'POST /tokens/refresh' do
           client_secret: application.client_secret
         }
       end
-  
+
       it 'Returns a 403 (Forbidden) status code' do
         expect(last_response.status).to be 403
       end
-  
+
       it 'Returns the correct body' do
         expect(last_response.body).to include_json(
           field: 'token', error: 'used'

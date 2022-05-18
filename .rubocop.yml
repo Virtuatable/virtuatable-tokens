@@ -1,0 +1,11 @@
+Metrics/BlockLength:
+  Enabled: true
+  Exclude: 
+    - spec/**/*
+Style/Documentation:
+  Enabled: true
+  Exclude:
+    - decorators/**/*
+AllCops:
+  NewCops: enable
+  SuggestExtensions: false

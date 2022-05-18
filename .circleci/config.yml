@@ -1,0 +1,72 @@
+version: 2.1
+
+orbs:
+  kube: circleci/kubernetes@1.3.0
+
+jobs:
+  rspec:
+    docker:
+      - image: cimg/ruby:3.0.0
+      - image: circleci/mongo:4.0.28-xenial-ram
+    steps:
+      - checkout
+      - run:
+          command: bundle install && bundle exec rspec
+  rubocop:
+    docker:
+      - image: cimg/ruby:3.0.0
+    steps:
+      - checkout
+      - run:
+          command: bundle install && bundle exec rubocop
+  deploy:
+    docker:
+      - image: cimg/ruby:3.0.0
+    environment:
+      DEPLOYMENT_URL: https://raw.githubusercontent.com/Virtuatable/deployment/master/kubernetes/deployment.yml
+      SERVICE_URL: https://raw.githubusercontent.com/Virtuatable/deployment/master/kubernetes/service.yml
+      INGRESS_URL: https://raw.githubusercontent.com/Virtuatable/deployment/master/kubernetes/ingress.yml
+      DOCKERFILE: https://raw.githubusercontent.com/Virtuatable/deployment/master/Dockerfile
+    steps:
+      - checkout
+      - kube/install-kubectl
+      - kube/install-kubeconfig
+      - setup_remote_docker
+      - run:
+          name: Install the ERB dependency to templatize Kubernetes manifests
+          command: gem install erb
+      - run:
+          name: Authenticate on DockerHub
+          command: echo ${DOCKER_PASSWORD} | docker login --username ${DOCKER_USERNAME} --password-stdin
+      - run:
+          name: Fix the version for the docker and kubernetes executions
+          command: echo "export DOCKER_TAG=$(date +%s)" >> $BASH_ENV
+      - run:
+          name: Build the image to be able to push it online
+          command: wget ${DOCKERFILE} && docker build -t virtuatable/tokens:${DOCKER_TAG} -f Dockerfile .
+      - run:
+          name: Push the image to the DockerHub DTR
+          command: docker push virtuatable/tokens:${DOCKER_TAG}
+      - run:
+          name: Deploys the application on Kubernetes
+          command: curl ${DEPLOYMENT_URL} | erb service=tokens version=${DOCKER_TAG} - | kubectl apply -f -
+      - run:
+          name: Creates the application load balancer
+          command: curl ${SERVICE_URL} | erb service=tokens - | kubectl apply -f -
+      - run:
+          name: Creates the ingress to access the app
+          command: curl ${INGRESS_URL} | erb service=tokens prefix=/api/tokens - | kubectl apply -f -
+
+workflows:
+  build:
+    jobs:
+      - rspec
+      - rubocop
+      - deploy
+          requires:
+            - rspec
+            - rubocop
+          filters:
+            branches:
+              only:
+                - main
